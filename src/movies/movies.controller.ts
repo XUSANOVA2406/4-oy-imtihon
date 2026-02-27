@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Delete, Param, Body, Req } from '@nestjs/common';
+import {Controller,Get, Post,Delete,Param,  Body,Req, UseGuards,} from '@nestjs/common';
 import { MoviesService } from './movies.service';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CreateMovieDto } from './dto/create-movie.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 
-@ApiBearerAuth('access-token')
+@ApiBearerAuth()
 @ApiTags('Movies')
 @Controller('movies')
 export class MoviesController {
@@ -13,37 +16,36 @@ export class MoviesController {
   getAllMovies() {
     return this.moviesService.getAllMovies();
   }
+ @UseGuards(JwtAuthGuard)
+@Get(':id')
+getMovie(@Req() req: any, @Param('id') id: string) {
+  const userId = req.user?.userId;
+  return this.moviesService.getMovie(id, userId);
+}
 
-  @Get(':id')
-  getMovie(@Param('id') id: string) {
-    return this.moviesService.getMovie(id);
-  }
-
- @Post()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
+  @Post()
+  @ApiOperation({ summary: '' })
   create(@Req() req: any, @Body() body: CreateMovieDto) {
     const userId = req.user.userId;
     return this.moviesService.create(userId, body);
   }
-
-
-  @Post()
-  @ApiOperation({ summary: '' })
-  createMovie(@Body() body: CreateMovieDto) {
-    const userId = '11111111-1111-1111-1111-111111111111';
-    return this.moviesService.create(userId, body);
-  }
- 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
   @Post(':movieId/categories/:categoryId')
   addCategory(
-  @Param('movieId') movieId: string,
-  @Param('categoryId') categoryId: string,
-) {
-  return this.moviesService.addCategory(movieId, categoryId);
-}
+    @Param('movieId') movieId: string,
+    @Param('categoryId') categoryId: string,
+  ) {
+    return this.moviesService.addCategory(movieId, categoryId);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'superadmin')
   @Delete(':id')
-  deleteMovie(@Param('id') id: string) {
-    const userId = '11111111-1111-1111-1111-111111111111';
+  deleteMovie(@Req() req: any, @Param('id') id: string) {
+    const userId = req.user.userId;
     return this.moviesService.deleteMovie(id, userId);
   }
 }
-

@@ -1,31 +1,24 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsInt, IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateMovieDto {
-
-  @ApiProperty({ example: "Kelinlar qo'zg'oloni" })
-  @IsString()
+  @ApiProperty()
   title: string;
 
-  @ApiProperty({ example: "O'zbek oilalari haqida film" })
-  @IsString()
+  @ApiProperty()
   description: string;
 
-  @ApiProperty({ example: 2019 })
-  @IsInt()
+  @ApiProperty()
   releaseYear: number;
 
-  @ApiProperty({ example: 150 })
-  @IsInt()
+  @ApiProperty()
   duration: number;
 
-  @ApiProperty({
-    example: ["category-uuid-1", "category-uuid-2"],
-    description: "Kino kategoriyalari IDlari",
-  })
-  @IsArray()
-  @IsNotEmpty()
+  @ApiProperty({ type: [String] })
   categoryIds: string[];
 
-  
+  @ApiProperty({ required: false })
+  posterUrl?: string;
+
+  @ApiProperty({ required: false, default: 'free' })
+  subscriptionType?: string;
 }

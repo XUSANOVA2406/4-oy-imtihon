@@ -1,68 +1,73 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateMovieDto } from './dto/create-movie.dto';
 
 @Injectable()
 export class MoviesService {
   constructor(private prisma: PrismaService) {}
+async create(userId: string, dto: CreateMovieDto) {
+  return this.prisma.movie.create({
+    data: {
+      title: dto.title,
+      description: dto.description,
+      releaseYear: dto.releaseYear,
+      duration: dto.duration,
+      createdBy: userId,
 
-  async findAll() {
+      categories: {
+        connect: dto.categoryIds.map((id) => ({ id })),
+      },
+    },
+    include: {
+      categories: true,
+    },
+  });
+}
+  async getAllMovies() {
     return this.prisma.movie.findMany({
       include: {
-        creator: true,
-      },
-    });
-  }
-
-  async findOne(id: string) {
-    return this.prisma.movie.findUnique({
-      where: { id },
-      include: { creator: true },
-    });
-  }
-
-  async create(userId: string, data: any) {
-    return this.prisma.movie.create({
-      data: {
-        title: data.title,
-        description: data.description,
-        releaseYear: data.releaseYear,
         creator: {
-          connect: { id: userId },
+          select: {
+            id: true,
+            username: true,
+          },
         },
       },
     });
   }
+  async getMovie(id: string) {
+    const movie = await this.prisma.movie.findUnique({
+      where: { id },
+    });
 
-  async remove(id: string) {
+    if (!movie) throw new NotFoundException('Movie not found');
+    return movie;
+  }
+  async deleteMovie(id: string, userId: string) {
+    const movie = await this.prisma.movie.findUnique({
+      where: { id },
+    });
+
+    if (!movie) throw new NotFoundException('Movie not found');
+
+    if (movie.createdBy !== userId)
+      throw new ForbiddenException('You are not owner');
+
     return this.prisma.movie.delete({
       where: { id },
     });
   }
-  async update(id: string, userId: string, data: any) {
-  const movie = await this.prisma.movie.findUnique({
-    where: { id },
-  });
-
-  if (!movie) throw new Error('Kino topilmadi');
-
-  if (movie.creatorId !== userId)
-    throw new Error('Faqat egasi tahrirlaydi');
-
+  async addCategory(movieId: string, categoryId: string) {
   return this.prisma.movie.update({
-    where: { id },
+    where: { id: movieId },
     data: {
-      title: data.title,
-      description: data.description,
-      releaseYear: data.releaseYear,
+      categories: {
+        connect: { id: categoryId },
+      },
+    },
+    include: {
+      categories: true,
     },
   });
 }
-
-  async myMovies(userId: string) {
-    return this.prisma.movie.findMany({
-      where: {
-        creatorId: userId,
-      },
-    });
-  }
 }

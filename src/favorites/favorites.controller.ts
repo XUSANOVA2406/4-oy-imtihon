@@ -1,28 +1,26 @@
-import { Controller, Post, Get, Delete, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param } from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
-import { JwtAuthGuard } from '../auth/jwt.guard';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
-@ApiTags('Favorites')
+@ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard)
 @Controller('favorites')
 export class FavoritesController {
-  constructor(private favoritesService: FavoritesService) {}
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
+  constructor(private readonly favoritesService: FavoritesService) {}
+  private userId = '11111111-1111-1111-1111-111111111111';
+
   @Post(':movieId')
-  add(@Param('movieId') movieId: string, @Req() req: any) {
-    return this.favoritesService.add(req.user.userId, movieId);
+  add(@Param('movieId') movieId: string) {
+    return this.favoritesService.addToFavorites(this.userId, movieId);
   }
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Get()
-  get(@Req() req: any) {
-    return this.favoritesService.getUserFavorites(req.user.userId);
+  get() {
+    return this.favoritesService.getFavorites(this.userId);
   }
-  @ApiBearerAuth()
-  @UseGuards(JwtAuthGuard)
   @Delete(':movieId')
-  remove(@Param('movieId') movieId: string, @Req() req: any) {
-    return this.favoritesService.remove(req.user.userId, movieId);
+  remove(@Param('movieId') movieId: string) {
+    return this.favoritesService.removeFavorite(this.userId, movieId);
   }
 }

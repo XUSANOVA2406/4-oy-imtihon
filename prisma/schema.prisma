@@ -7,23 +7,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  user
-  admin
-  superadmin
-}
-
-enum SubscriptionType {
-  free
-  premium
-}
-
 model User {
   id        String   @id @default(uuid())
-  username  String   @unique
+  username  String
   email     String   @unique
   password  String
-  role      Role     @default(user)
+  role      String   @default("user")
   createdAt DateTime @default(now())
 
   profile       Profile?
@@ -31,17 +20,14 @@ model User {
   favorites     Favorite[]
   reviews       Review[]
   subscriptions UserSubscription[]
-  createdMovies Movie[]
 }
 
 model Profile {
-  id       String  @id @default(uuid())
-  fullName String?
-  phone    String?
-  country  String?
+  id     String  @id @default(uuid())
+  bio    String?
+  userId String  @unique
 
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 }
 
 model Movie {
@@ -49,73 +35,49 @@ model Movie {
   title            String
   description      String
   releaseYear      Int
-  durationMinutes  Int
+  duration         Int
   posterUrl        String?
-  rating           Float   @default(0)
   subscriptionType String  @default("free")
 
   createdBy String
   creator   User   @relation("CreatedMovies", fields: [createdBy], references: [id])
 
+  categories Category[] @relation("MovieCategories")
   favorites  Favorite[]
   reviews    Review[]
-  categories MovieCategory[]
-  user       User?           @relation(fields: [userId], references: [id])
-  userId     String?
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String
+
+  movies Movie[] @relation("MovieCategories")
 }
 
 model Favorite {
-  id String @id @default(uuid())
-
+  id      String @id @default(uuid())
   userId  String
   movieId String
 
   user  User  @relation(fields: [userId], references: [id])
   movie Movie @relation(fields: [movieId], references: [id])
-
-  @@unique([userId, movieId])
 }
 
 model Review {
   id      String  @id @default(uuid())
   rating  Int
   comment String?
-
   userId  String
   movieId String
 
   user  User  @relation(fields: [userId], references: [id])
   movie Movie @relation(fields: [movieId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-model Category {
-  id   String @id @default(uuid())
-  name String @unique
-
-  movies MovieCategory[]
-}
-
-model MovieCategory {
-  id String @id @default(uuid())
-
-  movieId    String
-  categoryId String
-
-  movie    Movie    @relation(fields: [movieId], references: [id], onDelete: Cascade)
-  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-
-  @@unique([movieId, categoryId])
 }
 
 model UserSubscription {
-  id        String   @id @default(uuid())
-  userId    String
-  planId    String
-  status    String
-  startDate DateTime @default(now())
-  endDate   DateTime
+  id     String @id @default(uuid())
+  type   String
+  userId String
 
   user User @relation(fields: [userId], references: [id])
 }

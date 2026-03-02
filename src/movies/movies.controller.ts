@@ -19,18 +19,20 @@ export class MoviesController {
  @UseGuards(JwtAuthGuard)
 @Get(':id')
 getMovie(@Req() req: any, @Param('id') id: string) {
-  const userId = req.user?.userId;
-  return this.moviesService.getMovie(id, userId);
+  return this.moviesService.getMovie(req.user.userId, id);
 }
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'superadmin')
   @Post()
   @ApiOperation({ summary: '' })
-  create(@Req() req: any, @Body() body: CreateMovieDto) {
-    const userId = req.user.userId;
-    return this.moviesService.create(userId, body);
-  }
+  @Post()
+@UseGuards(JwtAuthGuard)
+create(@Req() req: any, @Body() body: CreateMovieDto) {
+  console.log(req.user);  
+  const userId = req.user.userId;
+  return this.moviesService.create(userId, body);
+}
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'superadmin')
   @Post(':movieId/categories/:categoryId')

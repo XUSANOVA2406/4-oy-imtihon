@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import {Injectable,BadRequestException,UnauthorizedException,} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -40,30 +36,27 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { email },
-    });
+  const user = await this.prisma.user.findUnique({
+    where: { email },
+  });
 
-    if (!user) {
-      throw new UnauthorizedException('Email yoki parol xato');
-    }
-
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      throw new UnauthorizedException('Email yoki parol xato');
-    }
-
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const token = this.jwtService.sign(payload);
-
-    return {
-      access_token: token,
-    };
+  if (!user) {
+    throw new UnauthorizedException('User topilmadi');
   }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    throw new UnauthorizedException('Password xato');
+  }
+  const payload = {
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  };
+
+  return {
+    access_token: this.jwtService.sign(payload),
+  };
+}
 }

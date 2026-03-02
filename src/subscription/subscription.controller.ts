@@ -1,30 +1,30 @@
-import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
-import { SubscriptionService } from './subscription.service';
-import { JwtAuthGuard } from '../auth/guards/jwt.guard';
+import { Controller, Post, Req, UseGuards, Body } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { BuySubscriptionDto } from './dto/buy-subscription.dto';
+import { ApiBearerAuth, ApiTags, ApiOperation, ApiBody } from '@nestjs/swagger';
 
+@ApiTags('Subscription')
 @Controller('subscription')
 export class SubscriptionController {
-  constructor(private subscriptionService: SubscriptionService) {}
+  constructor(private prisma: PrismaService) {}
 
-  @Get('plans')
-  getPlans() {
-    return this.subscriptionService.getPlans();
-  }
-
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Buy premium subscription' })
+  @ApiBody({ type: BuySubscriptionDto })
   @UseGuards(JwtAuthGuard)
   @Post('buy')
-  buy(@Req() req: any, @Body() body: any) {
-    return this.subscriptionService.buy(req.user.userId, body.planId);
-  }
-  @UseGuards(JwtAuthGuard)
-  @Get('me')
-  mySub(@Req() req: any) {
-    return this.subscriptionService.mySubscription(req.user.userId);
-  }
+  async buyPremium(
+    @Req() req: any,
+    @Body() dto: BuySubscriptionDto,
+  ) {
+    const userId = req.user.userId;
 
-  @UseGuards(JwtAuthGuard)
-  @Get('history')
-  history(@Req() req: any) {
-    return this.subscriptionService.history(req.user.userId);
-}
+    return this.prisma.userSubscription.create({
+      data: {
+        userId,
+        type: dto.type, 
+      },
+    });
+  }
 }

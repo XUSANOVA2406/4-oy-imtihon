@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Delete, Param } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, Req } from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
 import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
@@ -20,7 +20,7 @@ export class FavoritesController {
     return this.favoritesService.getFavorites(this.userId);
   }
   @Delete(':movieId')
-  remove(@Param('movieId') movieId: string) {
-    return this.favoritesService.removeFavorite(this.userId, movieId);
-  }
+  remove(@Req() req: any, @Param('movieId') movieId: string) {
+  return this.favoritesService.removeFromFavorites(req.user.userId, movieId);
+}
 }

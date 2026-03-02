@@ -11,7 +11,7 @@ async create(userId: string, dto: any) {
       title: dto.title,
       description: dto.description,
       releaseYear: Number(dto.releaseYear),
-      durationMinutes: Number(dto.duration),
+      duration: Number(dto.duration),
 
       posterUrl: dto.posterUrl ?? null,
       subscriptionType: dto.subscriptionType ?? 'free',
@@ -41,34 +41,29 @@ async create(userId: string, dto: any) {
       },
     });
   }
-async getMovie(id: string, userId?: string) {
+async getMovie(userId: string, id: string) {
   const movie = await this.prisma.movie.findUnique({
     where: { id },
-  });
-
-  if (!movie) {
-    throw new Error('Movie not found');
-  }
-  if (movie.subscriptionType === 'free') {
-    return movie;
-  }
-
-  if (!userId) {
-    throw new Error('Premium sotib olsangiz korolasiz');
-  }
-
-  const subscription = await this.prisma.userSubscription.findFirst({
-    where: {
-      userId: userId,
-      status: 'active',
-      endDate: {
-        gt: new Date(),
-      },
+    include: {
+      categories: true,
     },
   });
 
-  if (!subscription) {
-    throw new Error('Premium sotib olsangiz korolasiz');
+  if (!movie) {
+    throw new NotFoundException('Movie not found');
+  }
+  if (movie.subscriptionType === 'premium') {
+
+    const subscription = await this.prisma.userSubscription.findFirst({
+      where: {
+        userId: userId,
+        type: 'premium',
+      },
+    });
+
+    if (!subscription) {
+      throw new ForbiddenException('Kinoni korish uchun premium soitb oling');
+    }
   }
 
   return movie;
@@ -81,7 +76,7 @@ async getMovie(id: string, userId?: string) {
     if (!movie) throw new NotFoundException('Movie not found');
 
     if (movie.createdBy !== userId)
-      throw new ForbiddenException('You are not owner');
+      throw new ForbiddenException('Siz egasi emassiz');
 
     return this.prisma.movie.delete({
       where: { id },

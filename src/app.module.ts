@@ -7,10 +7,11 @@ import { UsersModule } from './users/users.module';
 import { FavoritesModule } from './favorites/favorites.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { CategoriesModule } from './categories/categories.module';
+import { SubscriptionModule } from './subscription/subscription.module';
 
 
 @Module({
-  imports: [AuthModule,PrismaModule,MoviesModule,UsersModule,FavoritesModule, ReviewsModule, CategoriesModule,],
+  imports: [AuthModule,PrismaModule,MoviesModule,UsersModule,FavoritesModule, ReviewsModule, CategoriesModule,SubscriptionModule],
 })
 export class AppModule {}
 // SubscriptionModule,
